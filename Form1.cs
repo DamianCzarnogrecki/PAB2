@@ -1,18 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Runtime.Remoting.Messaging;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 
 namespace PAB2
 {
@@ -44,12 +34,6 @@ namespace PAB2
         private void button1_Click(object sender, EventArgs e)
         {
             errorText.Text = "";
-            //jesli mniejsze to odejmij mu tyle tego itemu
-            //i wstaw do sklepu (jesli sklep nie ma takiego itemu to utworz nowy rekord a jak ma to dodaj quantity)
-            //i wstaw do gracza (jesli gracz nie ma takiego itemu to utworz nowy rekord a jak ma to dodaj quantity)
-            //dać try catch catch i tak
-
-            //connectionstring z App.config dać
             string playerItemNameText = playerItemName.Text;
             int playerItemQuantityNumber = Convert.ToInt32(playerItemQuantity.Value);
             string shopItemNameText = shopItemName.Text;
@@ -78,17 +62,67 @@ namespace PAB2
                             //wymiana
                             try
                             {
+                                int chosenItemExists = -1;
+                                int chosenID = 0;
                                 //odejmowanie graczowi
                                 command = new SqlCommand("UPDATE PlayerItem SET Quantity -= @playerItemQuantityNumber FROM PlayerItem INNER JOIN Item ON PlayerItem.ItemID = Item.ID WHERE PlayerItem.PlayerID = 1 AND Item.Name = @playerItemNameText", connection);
                                 command.Parameters.AddWithValue("@playerItemQuantityNumber", playerItemQuantityNumber);
                                 command.Parameters.AddWithValue("@playerItemNameText", playerItemNameText);
                                 command.ExecuteNonQuery();
+                                Console.WriteLine("gracz - odjęte");
+
                                 //dodawanie sklepowi
-                                command = new SqlCommand("UPDATE ShopItem SET Quantity += @playerItemQuantityNumber FROM ShopItem INNER JOIN Item ON ShopItem.ItemID = Item.ID INNER JOIN PlayerItem ON PlayerItem.ItemID = Item.ID WHERE ShopItem.ShopID = 1 AND Item.Name = @playerItemNameText", connection);
-                                command.Parameters.AddWithValue("@playerItemQuantityNumber", playerItemQuantityNumber);
+
+                                //SELECT ID ITEMU
+                                command = new SqlCommand("SELECT COUNT(ItemID) FROM ShopItem INNER JOIN Item ON Item.ID = ShopItem.ItemID WHERE Item.Name = @playerItemNameText", connection);
                                 command.Parameters.AddWithValue("@playerItemNameText", playerItemNameText);
-                                command.ExecuteNonQuery();
-                                Console.WriteLine("gracz - odjęte, sklep - dodane");
+                                reader = command.ExecuteReader();
+                                if (reader.Read())
+                                {
+                                    chosenItemExists = reader.GetInt32(0);
+                                }
+                                else
+                                {
+                                    chosenItemExists = -1;
+                                }
+                                reader.Close();
+
+                                command = new SqlCommand("SELECT ID FROM Item WHERE Item.Name = @playerItemNameText", connection);
+                                command.Parameters.AddWithValue("@playerItemNameText", playerItemNameText);
+                                reader = command.ExecuteReader();
+                                if (reader.Read())
+                                {
+                                    chosenID = reader.GetInt32(0);
+                                }
+                                else
+                                {
+                                    chosenID = 0;
+                                }
+                                reader.Close();
+
+                                if (chosenItemExists == 1 && chosenID != 0)
+                                {
+                                    command = new SqlCommand("UPDATE ShopItem SET Quantity += @playerItemQuantityNumber FROM ShopItem INNER JOIN Item ON ShopItem.ItemID = Item.ID INNER JOIN PlayerItem ON PlayerItem.ItemID = Item.ID WHERE ShopItem.ShopID = 1 AND Item.Name = @playerItemNameText", connection);
+                                    command.Parameters.AddWithValue("@playerItemQuantityNumber", playerItemQuantityNumber);
+                                    command.Parameters.AddWithValue("@playerItemNameText", playerItemNameText);
+                                    command.ExecuteNonQuery();
+                                    Console.WriteLine("sklep - dodane");
+                                }
+                                else if(chosenItemExists == 0 && chosenID != 0)
+                                {
+                                    command = new SqlCommand("INSERT INTO ShopItem (ShopID, ItemID, Quantity) VALUES (1, @chosenID, @playerItemQuantityNumber)", connection);
+                                    command.Parameters.AddWithValue("@chosenID", chosenID);
+                                    command.Parameters.AddWithValue("@playerItemQuantityNumber", playerItemQuantityNumber);
+                                    command.ExecuteNonQuery();
+                                    Console.WriteLine("sklep - wstawione");
+                                    
+                                }
+                                else
+                                {
+                                    errorText.Text += "\n\rBłąd pobrania liczby przedmiotów z bazy (gracz do sklepu).";
+                                }
+                                
+                                chosenItemExists = -1;
                                 RefreshTables();
                             }
                             catch(SqlException ex)
@@ -139,17 +173,68 @@ namespace PAB2
                             //wymiana
                             try
                             {
+                                int chosenItemExists = -1;
+                                int chosenID = 0;
                                 //odejmowanie sklepowi
                                 command = new SqlCommand("UPDATE ShopItem SET Quantity -= @shopItemQuantityNumber FROM ShopItem INNER JOIN Item ON ShopItem.ItemID = Item.ID WHERE ShopItem.ShopID = 1 AND Item.Name = @shopItemNameText", connection);
                                 command.Parameters.AddWithValue("@shopItemQuantityNumber", shopItemQuantityNumber);
                                 command.Parameters.AddWithValue("@shopItemNameText", shopItemNameText);
                                 command.ExecuteNonQuery();
-                                //dodawanie graczowi
-                                command = new SqlCommand("UPDATE PlayerItem SET Quantity += @shopItemQuantityNumber FROM PlayerItem INNER JOIN Item ON PlayerItem.ItemID = Item.ID INNER JOIN ShopItem ON ShopItem.ItemID = Item.ID WHERE PlayerItem.PlayerID = 1 AND Item.Name = @shopItemNameText", connection);
-                                command.Parameters.AddWithValue("@shopItemQuantityNumber", shopItemQuantityNumber);
-                                command.Parameters.AddWithValue("@shopItemNameText", shopItemNameText);
-                                command.ExecuteNonQuery();
                                 Console.WriteLine("sklep - odjęte");
+
+                                //dodawanie graczowi
+
+                                //SELECT ID ITEMU
+                                command = new SqlCommand("SELECT COUNT(ItemID) FROM PlayerItem INNER JOIN Item ON Item.ID = PlayerItem.ItemID WHERE Item.Name = @shopItemNameText", connection);
+                                command.Parameters.AddWithValue("@shopItemNameText", shopItemNameText);
+                                reader = command.ExecuteReader();
+                                if (reader.Read())
+                                {
+                                    chosenItemExists = reader.GetInt32(0);
+                                }
+                                else
+                                {
+                                    chosenItemExists = -1;
+                                }
+                                reader.Close();
+
+                                command = new SqlCommand("SELECT ID FROM Item WHERE Item.Name = @shopItemNameText", connection);
+                                command.Parameters.AddWithValue("@shopItemNameText", shopItemNameText);
+                                reader = command.ExecuteReader();
+                                if (reader.Read())
+                                {
+                                    chosenID = reader.GetInt32(0);
+                                }
+                                else
+                                {
+                                    chosenID = 0;
+                                }
+                                reader.Close();
+
+                                if (chosenItemExists == 1 && chosenID != 0)
+                                {
+                                    command = new SqlCommand("UPDATE PlayerItem SET Quantity += @shopItemQuantityNumber FROM PlayerItem INNER JOIN Item ON PlayerItem.ItemID = Item.ID INNER JOIN ShopItem ON ShopItem.ItemID = Item.ID WHERE PlayerItem.PlayerID = 1 AND Item.Name = @shopItemNameText", connection);
+                                    command.Parameters.AddWithValue("@shopItemQuantityNumber", shopItemQuantityNumber);
+                                    command.Parameters.AddWithValue("@shopItemNameText", shopItemNameText);
+                                    command.ExecuteNonQuery();
+                                    Console.WriteLine("gracz - dodane");
+
+                                }
+                                else if (chosenItemExists == 0 && chosenID != 0)
+                                {
+                                    command = new SqlCommand("INSERT INTO PlayerItem (PlayerID, ItemID, Quantity) VALUES (1, @chosenID, @shopItemQuantityNumber)", connection);
+                                    command.Parameters.AddWithValue("@chosenID", chosenID);
+                                    command.Parameters.AddWithValue("@shopItemQuantityNumber", playerItemQuantityNumber);
+                                    command.ExecuteNonQuery();
+                                    Console.WriteLine("gracz - wstawione");
+                                    
+                                }
+                                else
+                                {
+                                    errorText.Text += "\n\rBłąd pobrania liczby przedmiotów z bazy (gracz do sklepu).";
+                                }
+                                
+                                chosenItemExists = -1;
                                 RefreshTables();
                             }
                             catch (SqlException ex)
