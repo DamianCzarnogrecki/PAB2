@@ -123,7 +123,7 @@ namespace PAB2
                                 }
                                 
                                 chosenItemExists = -1;
-                                RefreshTables();
+                               
                             }
                             catch(SqlException ex)
                             {
@@ -235,7 +235,7 @@ namespace PAB2
                                 }
                                 
                                 chosenItemExists = -1;
-                                RefreshTables();
+                                
                             }
                             catch (SqlException ex)
                             {
@@ -265,6 +265,24 @@ namespace PAB2
                 {
                     errorText.Text += "\n\rWystąpił błąd środowiska (sklep).";
                 }
+
+                try
+                {
+                    SqlCommand command = new SqlCommand("DELETE FROM PlayerItem WHERE Quantity < 1", connection);
+                    command.ExecuteNonQuery();
+                    command = new SqlCommand("DELETE FROM ShopItem WHERE Quantity < 1", connection);
+                    command.ExecuteNonQuery();
+                }
+                catch (SqlException ex)
+                {
+                    errorText.Text += "\n\rWystąpił błąd SQL (oczyszczanie tabel).";
+                }
+                catch (Exception ex)
+                {
+                    errorText.Text += "\n\rWystąpił błąd środowiska (oczyszczanie tabel).";
+                }
+
+                RefreshTables();
             }
         }
     }
