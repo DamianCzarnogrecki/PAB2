@@ -20,7 +20,6 @@ namespace PAB2
 
         public async void RefreshTables()
         {
-            
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 await connection.OpenAsync();
@@ -29,8 +28,9 @@ namespace PAB2
                 {
                     command.Connection = connection;
 
-                    //zwrocenie przedmiotow gracza
-                    command.CommandText = "SELECT Item.Name, Quantity FROM PlayerItem INNER JOIN Item ON Item.ID = PlayerItem.ItemID WHERE PlayerItem.PlayerID = @PlayerID";
+                    //pobranie przedmiotow gracza
+                    command.CommandText =
+                        "SELECT Item.Name, Quantity FROM PlayerItem INNER JOIN Item ON Item.ID = PlayerItem.ItemID WHERE PlayerItem.PlayerID = @PlayerID";
                     command.Parameters.AddWithValue("@PlayerID", 1);
                     using (SqlDataAdapter adapter = new SqlDataAdapter(command))
                     {
@@ -39,8 +39,9 @@ namespace PAB2
                         dataGridView1.DataSource = dataSet.Tables[0];
                     }
 
-                    //zwrocenie przedmiotow sklepu
-                    command.CommandText = "SELECT Item.Name, Quantity FROM ShopItem INNER JOIN Item ON Item.ID = ShopItem.ItemID WHERE ShopItem.ShopID = @ShopID";
+                    //pobranie przedmiotow sklepu
+                    command.CommandText =
+                        "SELECT Item.Name, Quantity FROM ShopItem INNER JOIN Item ON Item.ID = ShopItem.ItemID WHERE ShopItem.ShopID = @ShopID";
                     command.Parameters.AddWithValue("@ShopID", 1);
                     using (SqlDataAdapter adapter = new SqlDataAdapter(command))
                     {
@@ -79,29 +80,45 @@ namespace PAB2
                 try
                 {
                     //odejmowanie graczowi
-                    command.CommandText = "UPDATE PlayerItem SET Quantity -= @playerItemQuantityNumber FROM PlayerItem INNER JOIN Item ON PlayerItem.ItemID = Item.ID WHERE PlayerItem.PlayerID = 1 AND Item.Name = @playerItemNameText";
-                    command.Parameters.AddWithValue("@playerItemQuantityNumber", playerItemQuantityNumber);
+                    command.CommandText =
+                        "UPDATE PlayerItem SET Quantity -= @playerItemQuantityNumber FROM PlayerItem INNER JOIN Item ON PlayerItem.ItemID = Item.ID WHERE PlayerItem.PlayerID = 1 AND Item.Name = @playerItemNameText";
+                    command.Parameters.AddWithValue(
+                        "@playerItemQuantityNumber",
+                        playerItemQuantityNumber
+                    );
                     command.Parameters.AddWithValue("@playerItemNameText", playerItemNameText);
                     command.ExecuteNonQuery();
 
                     //dodawanie sklepowi
-                    command.CommandText = "UPDATE ShopItem SET Quantity += @playerItemQuantityNumber FROM ShopItem INNER JOIN Item ON ShopItem.ItemID = Item.ID INNER JOIN PlayerItem ON PlayerItem.ItemID = Item.ID WHERE ShopItem.ShopID = 1 AND Item.Name = @playerItemNameText";
+                    command.CommandText =
+                        "UPDATE ShopItem SET Quantity += @playerItemQuantityNumber FROM ShopItem INNER JOIN Item ON ShopItem.ItemID = Item.ID INNER JOIN PlayerItem ON PlayerItem.ItemID = Item.ID WHERE ShopItem.ShopID = 1 AND Item.Name = @playerItemNameText";
                     command.Parameters.Clear();
-                    command.Parameters.AddWithValue("@playerItemQuantityNumber", playerItemQuantityNumber);
+                    command.Parameters.AddWithValue(
+                        "@playerItemQuantityNumber",
+                        playerItemQuantityNumber
+                    );
                     command.Parameters.AddWithValue("@playerItemNameText", playerItemNameText);
                     command.ExecuteNonQuery();
 
                     //odejmowanie sklepowi
-                    command.CommandText = "UPDATE ShopItem SET Quantity -= @shopItemQuantityNumber FROM ShopItem INNER JOIN Item ON ShopItem.ItemID = Item.ID WHERE ShopItem.ShopID = 1 AND Item.Name = @shopItemNameText";
+                    command.CommandText =
+                        "UPDATE ShopItem SET Quantity -= @shopItemQuantityNumber FROM ShopItem INNER JOIN Item ON ShopItem.ItemID = Item.ID WHERE ShopItem.ShopID = 1 AND Item.Name = @shopItemNameText";
                     command.Parameters.Clear();
-                    command.Parameters.AddWithValue("@shopItemQuantityNumber", shopItemQuantityNumber);
+                    command.Parameters.AddWithValue(
+                        "@shopItemQuantityNumber",
+                        shopItemQuantityNumber
+                    );
                     command.Parameters.AddWithValue("@shopItemNameText", shopItemNameText);
                     command.ExecuteNonQuery();
 
                     //dodawanie graczowi
-                    command.CommandText = "UPDATE PlayerItem SET Quantity += @shopItemQuantityNumber FROM PlayerItem INNER JOIN Item ON PlayerItem.ItemID = Item.ID INNER JOIN ShopItem ON ShopItem.ItemID = Item.ID WHERE PlayerItem.PlayerID = 1 AND Item.Name = @shopItemNameText";
+                    command.CommandText =
+                        "UPDATE PlayerItem SET Quantity += @shopItemQuantityNumber FROM PlayerItem INNER JOIN Item ON PlayerItem.ItemID = Item.ID INNER JOIN ShopItem ON ShopItem.ItemID = Item.ID WHERE PlayerItem.PlayerID = 1 AND Item.Name = @shopItemNameText";
                     command.Parameters.Clear();
-                    command.Parameters.AddWithValue("@shopItemQuantityNumber", shopItemQuantityNumber);
+                    command.Parameters.AddWithValue(
+                        "@shopItemQuantityNumber",
+                        shopItemQuantityNumber
+                    );
                     command.Parameters.AddWithValue("@shopItemNameText", shopItemNameText);
                     command.ExecuteNonQuery();
 
@@ -119,6 +136,6 @@ namespace PAB2
                 }
             }
             RefreshTables();
-            }
         }
     }
+}
