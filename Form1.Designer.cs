@@ -53,15 +53,15 @@
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Location = new System.Drawing.Point(80, 45);
             this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(270, 160);
+            this.dataGridView1.Size = new System.Drawing.Size(245, 160);
             this.dataGridView1.TabIndex = 0;
             // 
             // dataGridView2
             // 
             this.dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView2.Location = new System.Drawing.Point(450, 45);
+            this.dataGridView2.Location = new System.Drawing.Point(481, 45);
             this.dataGridView2.Name = "dataGridView2";
-            this.dataGridView2.Size = new System.Drawing.Size(270, 160);
+            this.dataGridView2.Size = new System.Drawing.Size(245, 160);
             this.dataGridView2.TabIndex = 1;
             // 
             // label1
@@ -76,7 +76,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(447, 26);
+            this.label2.Location = new System.Drawing.Point(478, 26);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(59, 13);
             this.label2.TabIndex = 3;
@@ -178,9 +178,9 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(348, 264);
+            this.button1.Location = new System.Drawing.Point(328, 264);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(104, 40);
+            this.button1.Size = new System.Drawing.Size(149, 40);
             this.button1.TabIndex = 12;
             this.button1.Text = "EXCHANGE";
             this.button1.UseVisualStyleBackColor = true;
