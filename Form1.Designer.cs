@@ -177,7 +177,7 @@
             // 
             // exchangeButton
             // 
-            exchangeButton.Location = new Point(378, 305);
+            exchangeButton.Location = new Point(378, 320);
             exchangeButton.Name = "exchangeButton";
             exchangeButton.Size = new Size(179, 46);
             exchangeButton.TabIndex = 14;
