@@ -1,13 +1,14 @@
-﻿using System.Data;
-using System.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
+﻿using System.Diagnostics;
+using Dapper;
+using MySql.Data.MySqlClient;
 using PAB2.Generated;
 
 namespace PAB2
 {
     public partial class Form1 : Form
     {
-        string connectionString = "Data Source=.;Initial Catalog=PAB2;Integrated Security=True;TrustServerCertificate=True";
+        string connectionString =
+            "server=localhost;userid=root;password=71Bs3*VIkvv)s3HyDEWqM@6**6P]d!8K;database=pab2";
 
         public Form1()
         {
@@ -17,22 +18,18 @@ namespace PAB2
 
         public async void RefreshTables()
         {
-            using (var context = new Pab2Context(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 //pobranie przedmiotow gracza
-                var playerItems = await context.PlayerItems
-                    .Where(p => p.PlayerId == 1)
-                    .Select(p => new { p.Item.Name, p.Quantity })
-                    .ToListAsync();
-
+                string playerQuery =
+                    "SELECT item.Name, Quantity FROM playeritem INNER JOIN item ON item.ID = playeritem.ItemID WHERE playeritem.PlayerID = @PlayerID";
+                var playerItems = await connection.QueryAsync(playerQuery, new { PlayerID = 1 });
                 dataGridView1.DataSource = playerItems;
 
                 //pobranie przedmiotow sklepu
-                var shopItems = await context.ShopItems
-                    .Where(s => s.ShopId == 1)
-                    .Select(s => new { s.Item.Name, s.Quantity })
-                    .ToListAsync();
-
+                string shopQuery =
+                    "SELECT item.Name, Quantity FROM shopItem INNER JOIN item ON item.ID = shopitem.ItemID WHERE shopitem.ShopID = @ShopID";
+                var shopItems = await connection.QueryAsync(shopQuery, new { ShopID = 1 });
                 dataGridView2.DataSource = shopItems;
             }
         }
@@ -51,58 +48,88 @@ namespace PAB2
                 return;
             }
 
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             try
             {
-                using (var context = new Pab2Context(connectionString))
+                using (var connection = new MySqlConnection(connectionString))
                 {
-                    using (var contextTransaction = context.Database.BeginTransaction())
+                    connection.Open();
+
+                    using (var transaction = connection.BeginTransaction())
                     {
                         //odejmowanie graczowi
-                        var playerItem = context.PlayerItems
-                        .Include(p => p.Item)
-                        .Where(p => p.PlayerId == 1 && p.Item.Name == playerItemNameText)
-                        .SingleOrDefault();
+                        var playerItem = connection.QueryFirstOrDefault<PlayerItem>(@"
+                            UPDATE playeritem SET Quantity -= @playerItemQuantityNumber
+                            FROM playeritem INNER JOIN Item ON playeritem.itemID = item.ID
+                            WHERE playeritem.PlayerID = 1 AND item.Name = @playerItemNameText",
+                            new { PlayerId = 1, PlayerItemNameText = playerItemNameText },
+                            transaction
+                        );
 
                         playerItem.Quantity -= playerItemQuantityNumber;
 
                         //dodawanie sklepowi
-                        var shopItem = context.ShopItems
-                            .Include(s => s.Item)
-                            .Where(s => s.ShopId == 1 && s.Item.Name == playerItemNameText)
-                            .SingleOrDefault();
+                        var shopItem = connection.QueryFirstOrDefault<ShopItem>(@"
+                            UPDATE shopitem SET Quantity += @playerItemQuantityNumber
+                            FROM shopitem INNER JOIN item ON shopitem.ItemID = item.ID
+                            INNER JOIN playeritem ON playeritem.ItemID = item.ID WHERE shopitem.ShopID = 1
+                            AND item.Name = @playerItemNameText",
+                            new { ShopId = 1, PlayerItemNameText = playerItemNameText },
+                            transaction
+                        );
 
                         shopItem.Quantity += playerItemQuantityNumber;
 
                         //odejmowanie sklepowi
-                        shopItem = context.ShopItems
-                            .Include(s => s.Item)
-                            .Where(s => s.ShopId == 1 && s.Item.Name == shopItemNameText)
-                            .SingleOrDefault();
+                        shopItem = connection.QueryFirstOrDefault<ShopItem>(@"
+                            UPDATE shopitem SET Quantity -= @shopItemQuantityNumber
+                            FROM shopitem INNER JOIN item ON shopitem.ItemID = item.ID
+                            WHERE shopitem.ShopID = 1 AND item.Name = @shopItemNameText",
+                            new { ShopId = 1, ShopItemNameText = shopItemNameText },
+                            transaction
+                        );
 
                         shopItem.Quantity -= shopItemQuantityNumber;
 
                         //dodawanie graczowi
-                        playerItem = context.PlayerItems
-                            .Include(p => p.Item)
-                            .Where(p => p.PlayerId == 1 && p.Item.Name == shopItemNameText)
-                            .SingleOrDefault();
+                        playerItem = connection.QueryFirstOrDefault<PlayerItem>(@"
+                            UPDATE playeritem SET Quantity += @shopItemQuantityNumber
+                            FROM playeritem INNER JOIN item ON playeritem.ItemID = item.ID
+                            INNER JOIN shopitem ON shopitem.ItemID = item.ID WHERE playeritem.PlayerID = 1
+                            AND item.Name = @shopItemNameText",
+                            new { PlayerId = 1, ShopItemNameText = shopItemNameText },
+                            transaction
+                        );
 
                         playerItem.Quantity += shopItemQuantityNumber;
 
-                        context.SaveChanges();
-                        contextTransaction.Commit();
+                        connection.Execute(@"
+                            UPDATE playeritem SET Quantity = @PlayerItemQuantity WHERE Id = @PlayerItemId;
+                            UPDATE shopitem SET Quantity = @ShopItemQuantity WHERE Id = @ShopItemId;",
+                            new
+                            {
+                                PlayerItemQuantity = playerItem.Quantity,
+                                PlayerItemId = playerItem.ItemId,
+                                ShopItemQuantity = shopItem.Quantity,
+                                ShopItemId = shopItem.ItemId
+                            },
+                            transaction
+                        );
+
+                        transaction.Commit();
                     }
                 }
             }
-            catch (SqlException ex)
-            {
-                errorText.Text = "Błąd serwera";
-            }
-            catch (Exception ex)
+            catch
             {
                 errorText.Text = "Błąd";
             }
-            
+
+            TimeSpan queryTime = stopwatch.Elapsed;
+            Console.WriteLine("Komenda wykonana w {0} milisekund.", queryTime.TotalMilliseconds);
+
             RefreshTables();
         }
     }
