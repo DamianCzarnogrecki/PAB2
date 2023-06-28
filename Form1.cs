@@ -57,35 +57,31 @@ namespace PAB2
                 {
                     using (var contextTransaction = context.Database.BeginTransaction())
                     {
-                        //odejmowanie graczowi
+                        // odejmowanie graczowi
                         var playerItem = context.PlayerItems
-                        .Include(p => p.Item)
-                        .Where(p => p.PlayerId == 1 && p.Item.Name == playerItemNameText)
-                        .SingleOrDefault();
+                            .Include(p => p.Item)
+                            .SingleOrDefault(p => p.PlayerId == 1 && p.Item.Name == playerItemNameText);
 
                         playerItem.Quantity -= playerItemQuantityNumber;
 
-                        //dodawanie sklepowi
+                        // dodawanie sklepowi
                         var shopItem = context.ShopItems
                             .Include(s => s.Item)
-                            .Where(s => s.ShopId == 1 && s.Item.Name == playerItemNameText)
-                            .SingleOrDefault();
+                            .SingleOrDefault(s => s.ShopId == 1 && s.Item.Name == playerItemNameText);
 
                         shopItem.Quantity += playerItemQuantityNumber;
 
-                        //odejmowanie sklepowi
+                        // odejmowanie sklepowi
                         shopItem = context.ShopItems
                             .Include(s => s.Item)
-                            .Where(s => s.ShopId == 1 && s.Item.Name == shopItemNameText)
-                            .SingleOrDefault();
+                            .SingleOrDefault(s => s.ShopId == 1 && s.Item.Name == shopItemNameText);
 
                         shopItem.Quantity -= shopItemQuantityNumber;
 
-                        //dodawanie graczowi
+                        // dpdawanie graczowi
                         playerItem = context.PlayerItems
                             .Include(p => p.Item)
-                            .Where(p => p.PlayerId == 1 && p.Item.Name == shopItemNameText)
-                            .SingleOrDefault();
+                            .SingleOrDefault(p => p.PlayerId == 1 && p.Item.Name == shopItemNameText);
 
                         playerItem.Quantity += shopItemQuantityNumber;
 
